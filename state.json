@@ -1,0 +1,26 @@
+{
+	"Comment": "A simple minimal example of the States language",
+	"StartAt": "Hello World",
+	"States": {
+		"Hello World": {
+			"Type": "Task",
+			"Resource": "func_nodeinfo",
+			"Next": "Goodbye World"
+		},
+		"Goodbye World": {
+			"Type": "Task",
+			"Resource": "func_wordcount",
+			"Next": "wait ten seconds"
+		},
+		"wait ten seconds": {
+			"Type": "Wait",
+			"Seconds": 5,
+			"Next": "Hash it out"
+		},
+		"Hash it out": {
+			"Type": "Task",
+			"Resource": "func_base64",
+			"End": true
+		}
+	}
+}
