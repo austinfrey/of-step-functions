@@ -1,9 +1,10 @@
 const OpenFaaS = require('openfaas')
 const level = require('level')
-const sublevel = require('level-sublevel')
 const ttl = require('level-ttl')
 const hooks = require('level-hooks')
+
 const stateJSON = require('./state.json')
+const {task, wait} = require('./step-functions')
 
 //const heartbeat = setInterval(() => console.log('heartbeat'), 1000)
 require('net').createServer().listen();
@@ -40,28 +41,16 @@ async function triggerFunction(state, data, isDone) {
 		return console.log(data)
 	}
 
-	if(state.Type === 'Wait') {
-		try {
-			await waitState(state)
-		} catch(err) {
-			console.log(err)
-		}
-	} else {
-		try {
-			console.log(state.Type, state.Resource)
-			const result = await openfaas.invoke(state["Resource"], data, isJson = false)
-			await db.put('NextData', result.body)
-			await advanceState(state)
-		} catch(err) {
-			console.log(err)
-		}
-	}
+	await chooseStateType(state, data, db, advanceState)
 }
 
-async function waitState(state) {
-	await db.put('Wait', 'foo' ,{ttl: state['Seconds'] * 1000})
-	console.log(state.Type)
-	await db.put('NextState', stateJSON.States[state.Next])
+async function chooseStateType(state, data, db, advance) {
+	const type = {
+		  'Task': task
+		, 'Wait': wait
+	}
+
+	return await type[state.Type](state, data, db, advance)
 }
 
 async function advanceState(state) {
