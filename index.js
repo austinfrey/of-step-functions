@@ -4,9 +4,8 @@ const ttl = require('level-ttl')
 const hooks = require('level-hooks')
 
 const stateJSON = require('./state.json')
-const {task, wait} = require('./step-functions')
+const {task, wait, parallel} = require('./step-functions')
 
-//const heartbeat = setInterval(() => console.log('heartbeat'), 1000)
 require('net').createServer().listen();
 
 const openfaas = OpenFaaS('http://localhost:8080') // TODO should pull form ENV?
@@ -30,35 +29,35 @@ runStepFunction()
 	.catch(console.log)
 
 async function runStepFunction() {
-	const startAt = stateJSON['StartAt']
-	const firstState = stateJSON['States'][startAt]
+	const startAt = stateJSON.StartAt
+	const states = stateJSON.States
+	const firstState = states[startAt]
+
 	await triggerFunction(firstState)
 }
 
 async function triggerFunction(state, data, isDone) {
 	if(isDone) {
-//		clearInterval(heartbeat)
 		return console.log(data)
 	}
-
-	await chooseStateType(state, data, db, advanceState)
+	await chooseStateType(state, data)
 }
 
-async function chooseStateType(state, data, db, advance) {
-	const type = {
+async function chooseStateType(state, data) {
+	const type = state.Type
+	const stateTypes = {
 		  'Task': task
 		, 'Wait': wait
+		, 'Parallel': parallel
 	}
-
-	return await type[state.Type](state, data, db, advance)
+	return await stateTypes[type](state, data, db, next)
 }
 
-async function advanceState(state) {
-	const nextState = state['Next']
-	const isDone = state['Next']
-		? false
-		: true
+async function next(state) {
+	const next = state['Next']
+	const nextState = stateJSON.States[next]
 	const data = await db.get('NextData')
-	await triggerFunction(stateJSON.States[nextState], data, isDone)
+
+	await triggerFunction(nextState, data, !!state['End'])
 }
 

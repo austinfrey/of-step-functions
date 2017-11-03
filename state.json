@@ -14,7 +14,33 @@
 		},
 		"wait ten seconds": {
 			"Type": "Wait",
-			"Seconds": 5,
+			"Seconds": 4,
+			"Next": "Hash it out"
+		},
+		"In Parallel": {
+			"Type": "Parallel",
+			"Branches": [
+				{
+					"StartAt": "Echo",
+					"States": {
+						"Echo": {
+							"Type": "Task",
+							"Resource": "func_echoit",
+							"End": true
+						}
+					}
+				},
+				{
+					"StartAt": "Word Count",
+					"States": {
+						"Word Count": {
+							"Type": "Task",
+							"Resource": "func_wordcount",
+							"End": true
+						}
+					}
+				}
+			],
 			"Next": "Hash it out"
 		},
 		"Hash it out": {
