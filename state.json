@@ -10,12 +10,12 @@
 		"Goodbye World": {
 			"Type": "Task",
 			"Resource": "func_wordcount",
-			"Next": "wait ten seconds"
+			"Next": "Wait ten seconds"
 		},
-		"wait ten seconds": {
+		"Wait ten seconds": {
 			"Type": "Wait",
-			"Seconds": 4,
-			"Next": "In Parallel"
+			"Seconds": 2,
+			"Next": "Hash it out"
 		},
 		"In Parallel": {
 			"Type": "Parallel",
