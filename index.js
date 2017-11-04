@@ -4,11 +4,11 @@ const ttl = require('level-ttl')
 const hooks = require('level-hooks')
 
 const stateJSON = require('./state.json')
-const {task, wait, parallel} = require('./step-functions')
+const {task, parallel} = require('./step-functions')
 
 require('net').createServer().listen();
 
-const openfaas = OpenFaaS('http://localhost:8080') // TODO should pull form ENV?
+const openfaas = OpenFaaS('http://localhost:8080')
 const db = ttl(level('./db', {valueEncoding: 'json'}), {checkFrequency: 50})
 
 hooks(db)
@@ -18,7 +18,7 @@ db.hooks.post('!ttl!Wait', async(change) => {
 		try {
 			const state = await db.get('NextState')
 			const data = await db.get('NextData')
-			await triggerFunction(state, data, false)
+			await triggerFunction(false)
 		} catch(err) {
 			console.log(err)
 		}
@@ -31,33 +31,32 @@ runStepFunction()
 async function runStepFunction() {
 	const startAt = stateJSON.StartAt
 	const states = stateJSON.States
-	const firstState = states[startAt]
-
-	await triggerFunction(firstState)
+	await db.put('NextState', states[startAt])
+	await db.put('NextData', '')
+	await triggerFunction()
 }
 
-async function triggerFunction(state, data, isDone) {
+async function triggerFunction(isDone) {
+	const data = await db.get('NextData')
 	if(isDone) {
 		return console.log(data)
 	}
-	await chooseStateType(state, data)
-}
-
-async function chooseStateType(state, data) {
+	const state = await db.get('NextState')
+	const stateTypes = {'Task': task, 'Wait': wait, 'Parallel': parallel}
 	const type = state.Type
-	const stateTypes = {
-		  'Task': task
-		, 'Wait': wait
-		, 'Parallel': parallel
-	}
-	return await stateTypes[type](state, data, db, next)
+
+	return await stateTypes[type](state, data, next)
 }
 
-async function next(state) {
-	const next = state['Next']
-	const nextState = stateJSON.States[next]
-	const data = await db.get('NextData')
-
-	await triggerFunction(nextState, data, !!state['End'])
+async function next(results) {
+	const state = await db.get('NextState')
+	await db.put('NextState', stateJSON.States[state.Next])
+	await db.put('NextData', results)
+	await triggerFunction(!!state['End'])
 }
 
+async function wait(state, data, next) {
+	console.log(state.Type)
+	await db.put('Wait', 'foo' ,{ttl: state['Seconds'] * 1000})
+	await db.put('NextState', stateJSON.States[state.Next])
+}

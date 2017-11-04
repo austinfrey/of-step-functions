@@ -15,7 +15,7 @@
 		"wait ten seconds": {
 			"Type": "Wait",
 			"Seconds": 4,
-			"Next": "Hash it out"
+			"Next": "In Parallel"
 		},
 		"In Parallel": {
 			"Type": "Parallel",
@@ -41,7 +41,7 @@
 					}
 				}
 			],
-			"Next": "Hash it out"
+			"End": true
 		},
 		"Hash it out": {
 			"Type": "Task",
