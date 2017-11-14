@@ -2,6 +2,7 @@ const stateJSON = require('./state.json')
 
 function buildQueue(startJSON, startAt) {
 	const queue = []
+
 	addToQueue(startJSON, startAt, queue)
 	return queue
 }
@@ -13,10 +14,20 @@ function addToQueue(startJSON, startAt, queue) {
 		const parallelQueue = state.Branches.map(branch => {
 			return buildQueue(branch, branch.StartAt)
 		})
-		queue.push(parallelQueue)
+		queue.push({
+			  'Type': 'Parallel'
+			, 'Branches': parallelQueue
+			, 'Next': state.Next
+		})
 	}
-	queue.push(state)
-	if (!state || state.End) return
+
+	if (state.Type !== 'Parallel') {
+		queue.push(state)
+	}
+
+	if (!state || state.End) {
+		return
+	}
 	return addToQueue(startJSON, state.Next, queue)
 }
 
@@ -29,7 +40,7 @@ function processQueue(queue) {
 	processQueue(queue)
 }
 
-console.log(buildQueue(stateJSON, 'Hello World')[3][0])
+console.log(buildQueue(stateJSON, 'Hello World'))
 
 
 //processQueue(queue)
