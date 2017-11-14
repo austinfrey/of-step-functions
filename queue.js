@@ -1,4 +1,9 @@
-const stateJSON = require('./state.json')
+'use strict'
+
+module.exports = {
+	  buildQueue
+	, processQueue
+}
 
 function buildQueue(startJSON, startAt) {
 	const queue = []
@@ -36,11 +41,17 @@ function processQueue(queue) {
 	if (state.End) {
 		return console.log('END: Processed', state.Resource)
 	}
+	if (state.Type === 'Parallel') {
+		state.Branches.forEach(branchQueue => {
+			console.log('in for loop')
+			return processQueue(branchQueue)
+		})
+	}
 	console.log('Processed', state.Resource || state.Type)
-	processQueue(queue)
+	return processQueue(queue)
 }
 
-console.log(buildQueue(stateJSON, 'Hello World'))
 
-
+//console.log(buildQueue(stateJSON, 'Hello World'))
+//const queue = buildQueue(stateJSON, 'Hello World')
 //processQueue(queue)
