@@ -26,6 +26,11 @@
 						"Echo": {
 							"Type": "Task",
 							"Resource": "func_echoit",
+							"Next": "Funny Bunny"
+						},
+						"Funny Bunny": {
+							"Type": "Task",
+							"Resource": "func_wordcount",
 							"End": true
 						}
 					}
@@ -41,7 +46,7 @@
 					}
 				}
 			],
-			"End": true
+			"Next": "Hash it out"
 		},
 		"Hash it out": {
 			"Type": "Task",
